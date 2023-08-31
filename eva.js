@@ -1,16 +1,27 @@
 const assert = require('assert');
 
+const Environment = require('./environment');
+
 /**
  * Eva interpreter
  * */
 class Eva {
-    /*
-    * Exp ::= Number
-    * | String
-    * | [+ Exp Exp]
-    * ;
-    * */
-    eval(exp) {
+    /**
+     * Creates an Eva instance with a global environment.
+     * */
+    constructor(global = new Environment()) {
+        this.global = global;
+    }
+
+    /**
+     * Evaluates an expression in a given environment.
+     *
+     * Exp ::= Number
+     * | String
+     * | [+ Exp Exp]
+     * ;
+     * */
+    eval(exp, env = this.global) {
         // -------------------------------------------------------------
         // Self-evaluating expressions
         if (isNumber(exp)) {
@@ -43,7 +54,20 @@ class Eva {
             return this.eval(exp[1]) % this.eval(exp[2]);
         }
 
-        throw 'Unimplemented';
+        // -------------------------------------------------------------
+        // Variable declaration
+        if (exp[0] === 'var') {
+            const [_, name, value] = exp;
+            return env.define(name, this.eval(value));
+        }
+
+        // -------------------------------------------------------------
+        // Variable access
+        if (isVariableName(exp)) {
+            return env.lookup(exp);
+        }
+
+        throw `Unimplemented: ${JSON.stringify(exp)}`;
     }
 }
 
@@ -55,9 +79,20 @@ function isString(exp) {
     return typeof exp === 'string' && exp[0] === '"' && exp[exp.length - 1] === '"';
 }
 
+function isVariableName(exp) {
+    return typeof exp === 'string' && /^[a-zA-Z][a-zA-Z0-9_]*$/.test(exp);
+}
+
 // -------------------------------------------------------------
 // tests
-const eva = new Eva();
+const eva = new Eva(new Environment({
+    null: null,
+
+    true: true,
+    false: false,
+
+    VERSION: '1.0'
+}));
 
 // -------------------------------------------------------------
 // Self-evaluating expressions
@@ -82,5 +117,18 @@ assert.strictEqual(eva.eval(['+', ['/', 4, 2], 5]), 7);
 assert.strictEqual(eva.eval(['%', 4, 2]), 0);
 assert.strictEqual(eva.eval(['%', 5, 2]), 1);
 assert.strictEqual(eva.eval(['+', ['%', 5, 2], 5]), 6);
+
+// -------------------------------------------------------------
+// Variables
+assert.strictEqual(eva.eval(['var', 'x', 10]), 10);
+assert.strictEqual(eva.eval('x'), 10);
+assert.strictEqual(eva.eval(['var', 'y', 100]), 100);
+assert.strictEqual(eva.eval('y'), 100);
+
+assert.strictEqual(eva.eval(['var', 'isUser', 'true']), true);
+assert.strictEqual(eva.eval('VERSION'), '1.0');
+
+assert.strictEqual(eva.eval(['var', 'z', ['*', 2, 2]]), 4);
+assert.strictEqual(eva.eval('z'), 4);
 
 console.log("All assertions passed!");
