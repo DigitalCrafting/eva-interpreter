@@ -117,6 +117,17 @@ class Eva {
             return this.eval(alternate, env);
         }
 
+        // -------------------------------------------------------------
+        // while loop
+        if (exp[0] === 'while') {
+            const [_tag, condition, body] = exp;
+            let result;
+            while (this.eval(condition, env)) {
+                result = this.eval(body, env);
+            }
+            return result;
+        }
+
         throw `Unimplemented: ${JSON.stringify(exp)}`;
     }
 
