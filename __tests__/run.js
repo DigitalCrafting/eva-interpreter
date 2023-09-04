@@ -8,12 +8,11 @@ const tests = [
     require("./blocks-test"),
     require("./if-test"),
     require("./while-test"),
-    require("./built-in-function-test")
+    require("./built-in-function-test"),
+    require("./user-defined-function-test")
 ];
 
 const eva = new Eva();
-
-eva.eval(['print', '"Hello,"', '"World!"']);
 
 tests.forEach(test => test(eva));
 
