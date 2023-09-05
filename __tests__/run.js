@@ -10,7 +10,13 @@ const tests = [
     require("./while-test"),
     require("./built-in-function-test"),
     require("./user-defined-function-test"),
-    require("./lambda-function-test")
+    require("./lambda-function-test"),
+    require("./switch-test"),
+    require("./for-test"),
+    require("./inc-test"),
+    require("./inc-val-test"),
+    require("./dec-test"),
+    require("./dec-val-test")
 ];
 
 const eva = new Eva();
