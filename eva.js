@@ -86,16 +86,26 @@ class Eva {
 
         // -------------------------------------------------------------
         // Function declaration: (def square (x) (* x x))
+        //
+        // Syntactic sugar for: (var square (lambda (x) (* x x)))
         if (exp[0] === 'def') {
             const [_tag, name, params, body] = exp;
 
-            const fn = {
+            // JIT-transpile to a variable declaration
+            const varExp = ['var', name, ['lambda', params, body]];
+            return this.eval(varExp, env);
+        }
+
+        // -------------------------------------------------------------
+        // Lambda function declaration: (lambda (x) (* x x))
+        if (exp[0] === 'lambda') {
+            const [_tag, params, body] = exp;
+
+            return {
                 params,
                 body,
                 env // Closure
             }
-
-            return env.define(name, fn);
         }
 
         // -------------------------------------------------------------
