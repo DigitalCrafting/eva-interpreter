@@ -1,7 +1,9 @@
-const assert = require('assert');
-
 const Environment = require('./environment');
 const Transformer = require('./transform/eva-transformer')
+const evaParser = require("./parser/eva-parser")
+
+const fs = require("fs");
+
 /**
  * Eva interpreter
  * */
@@ -17,8 +19,8 @@ class Eva {
     /**
     * Evaluates global code wrapping into a block.
     * */
-    evalGlobal(expressions, env = this.global) {
-        return this._evalBlock(expressions, env);
+    evalGlobal(exp, env = this.global) {
+        return this._evalBody(exp, env);
     }
 
     /**
@@ -137,6 +139,28 @@ class Eva {
         if (exp[0] === 'super') {
             const [_tag, className] = exp;
             return this.eval(className, env).parent;
+        }
+
+        // -------------------------------------------------------------
+        // Module declaration: (module <name> <body>)
+        if (exp[0] === 'module') {
+            const [_tag, name, body] = exp;
+            const moduleEnv = new Environment({}, env);
+            this._evalBody(body, moduleEnv);
+            return env.define(name, moduleEnv);
+        }
+
+        // -------------------------------------------------------------
+        // Module import: (import <name>)
+        if (exp[0] === 'import') {
+            const [_tag, name] = exp;
+            const moduleSrc = fs.readFileSync(
+                `${__dirname}/modules/${name}.eva`,
+                'utf-8'
+            );
+            const body = evaParser.parse(`(begin ${moduleSrc})`);
+            const moduleExp = ['module', name, body];
+            return this.eval(moduleExp, this.global);
         }
 
         // -------------------------------------------------------------
